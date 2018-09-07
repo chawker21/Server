@@ -447,174 +447,175 @@ float Mob::CalculateDistance(float x, float y, float z) {
 }
 
 bool Mob::MakeNewPositionAndSendUpdate(float x, float y, float z, float speed, bool check_z, bool calculate_heading) {
-	if (GetID() == 0)
-		return true;
-
-	if (speed <= 0) {
-		SetCurrentSpeed(0);
-		return true;
-	}
-
-	if ((m_Position.x - x == 0) && (m_Position.y - y == 0)) { //spawn is at target coords
-		return false;
-	}
-	else if ((std::abs(m_Position.x - x) < 0.1) && (std::abs(m_Position.y - y) < 0.1)) {
-		if (IsNPC()) {
-			entity_list.ProcessMove(CastToNPC(), x, y, z);
-		}
-
-		m_Position.x = x;
-		m_Position.y = y;
-		m_Position.z = z;
-
-		return true;
-	}
-
-	int compare_steps = 20;
-	if (tar_ndx < compare_steps && m_TargetLocation.x == x && m_TargetLocation.y == y) {
-
-		float new_x = m_Position.x + m_TargetV.x * tar_vector;
-		float new_y = m_Position.y + m_TargetV.y * tar_vector;
-		float new_z = m_Position.z + m_TargetV.z * tar_vector;
-
-		if (IsNPC()) {
-			entity_list.ProcessMove(CastToNPC(), new_x, new_y, new_z);
-		}
-
-		m_Position.x = new_x;
-		m_Position.y = new_y;
-		m_Position.z = new_z;
-
-		if (check_z && fix_z_timer.Check() && (!this->IsEngaged() || flee_mode || currently_fleeing)) {
-			this->FixZ();
-		}
-
-		tar_ndx++;
-
-		return true;
-	}
-
-	if (tar_ndx > 50) {
-		tar_ndx--;
-	}
-	else {
-		tar_ndx = 0;
-	}
-
-	m_TargetLocation = glm::vec3(x, y, z);
-
-	float nx = this->m_Position.x;
-	float ny = this->m_Position.y;
-	float nz = this->m_Position.z;
-	//	float nh = this->heading;
-
-	m_TargetV.x = x - nx;
-	m_TargetV.y = y - ny;
-	m_TargetV.z = z - nz;
-	SetCurrentSpeed((int8)speed);
-	pRunAnimSpeed = speed;
-#ifdef BOTS
-	if (IsClient() || IsBot())
-#else
-	if (IsClient())
-#endif
-	{
-		animation = speed / 2;
-	}
-
-	// --------------------------------------------------------------------------
-	// 2: get unit vector
-	// --------------------------------------------------------------------------
-	float mag = sqrtf(m_TargetV.x*m_TargetV.x + m_TargetV.y*m_TargetV.y + m_TargetV.z*m_TargetV.z);
-	tar_vector = (float)speed / mag;
-
-	// mob move fix
-	int numsteps = (int)(mag * 13.5f / (float)speed + 0.5f);
-
-
-	// mob move fix
-
-	if (numsteps < 20) {
-		if (numsteps > 1) {
-			tar_vector = 1.0f;
-			m_TargetV.x = m_TargetV.x / (float) numsteps;
-			m_TargetV.y = m_TargetV.y / (float) numsteps;
-			m_TargetV.z = m_TargetV.z / (float) numsteps;
-
-			float new_x = m_Position.x + m_TargetV.x;
-			float new_y = m_Position.y + m_TargetV.y;
-			float new_z = m_Position.z + m_TargetV.z;
-			if (IsNPC()) {
-				entity_list.ProcessMove(CastToNPC(), new_x, new_y, new_z);
-			}
-
-			m_Position.x = new_x;
-			m_Position.y = new_y;
-			m_Position.z = new_z;
-			if (calculate_heading) {
-				m_Position.w = CalculateHeadingToTarget(x, y);
-			}
-			tar_ndx = 20 - numsteps;
-		}
-		else {
-			if (IsNPC()) {
-				entity_list.ProcessMove(CastToNPC(), x, y, z);
-			}
-
-			m_Position.x = x;
-			m_Position.y = y;
-			m_Position.z = z;
-		}
-	}
-
-	else {
-		tar_vector /= 13.5f;
-		float dur = Timer::GetCurrentTime() - pLastChange;
-		if (dur < 0.0f) {
-			dur = 0.0f;
-		}
-
-		if (dur > 100.f) {
-			dur = 100.f;
-		}
-
-		tar_vector *= (dur / 100.0f);
-
-		float new_x = m_Position.x + m_TargetV.x * tar_vector;
-		float new_y = m_Position.y + m_TargetV.y * tar_vector;
-		float new_z = m_Position.z + m_TargetV.z * tar_vector;
-
-		if (IsNPC()) {
-			entity_list.ProcessMove(CastToNPC(), new_x, new_y, new_z);
-		}
-
-		m_Position.x = new_x;
-		m_Position.y = new_y;
-		m_Position.z = new_z;
-		if (calculate_heading) {
-			m_Position.w = CalculateHeadingToTarget(x, y);
-		}
-	}
-
-	if (check_z && fix_z_timer.Check() && !this->IsEngaged())
-		this->FixZ();
-
-	SetMoving(true);
-	moved = true;
-
-	m_Delta = glm::vec4(m_Position.x - nx, m_Position.y - ny, m_Position.z - nz, 0.0f);
-
-	if (IsClient()) {
-		SendPositionUpdate(1);
-		CastToClient()->ResetPositionTimer();
-	}
-	else {
-		SendPositionUpdate();
-		SetAppearance(eaStanding, false);
-	}
-
-	pLastChange = Timer::GetCurrentTime();
 	return true;
+	//	if (GetID() == 0)
+//		return true;
+//
+//	if (speed <= 0) {
+//		SetCurrentSpeed(0);
+//		return true;
+//	}
+//
+//	if ((m_Position.x - x == 0) && (m_Position.y - y == 0)) { //spawn is at target coords
+//		return false;
+//	}
+//	else if ((std::abs(m_Position.x - x) < 0.1) && (std::abs(m_Position.y - y) < 0.1)) {
+//		if (IsNPC()) {
+//			entity_list.ProcessMove(CastToNPC(), x, y, z);
+//		}
+//
+//		m_Position.x = x;
+//		m_Position.y = y;
+//		m_Position.z = z;
+//
+//		return true;
+//	}
+//
+//	int compare_steps = 20;
+//	if (tar_ndx < compare_steps && m_TargetLocation.x == x && m_TargetLocation.y == y) {
+//
+//		float new_x = m_Position.x + m_TargetV.x * tar_vector;
+//		float new_y = m_Position.y + m_TargetV.y * tar_vector;
+//		float new_z = m_Position.z + m_TargetV.z * tar_vector;
+//
+//		if (IsNPC()) {
+//			entity_list.ProcessMove(CastToNPC(), new_x, new_y, new_z);
+//		}
+//
+//		m_Position.x = new_x;
+//		m_Position.y = new_y;
+//		m_Position.z = new_z;
+//
+//		if (check_z && fix_z_timer.Check() && (!this->IsEngaged() || flee_mode || currently_fleeing)) {
+//			this->FixZ();
+//		}
+//
+//		tar_ndx++;
+//
+//		return true;
+//	}
+//
+//	if (tar_ndx > 50) {
+//		tar_ndx--;
+//	}
+//	else {
+//		tar_ndx = 0;
+//	}
+//
+//	m_TargetLocation = glm::vec3(x, y, z);
+//
+//	float nx = this->m_Position.x;
+//	float ny = this->m_Position.y;
+//	float nz = this->m_Position.z;
+//	//	float nh = this->heading;
+//
+//	m_TargetV.x = x - nx;
+//	m_TargetV.y = y - ny;
+//	m_TargetV.z = z - nz;
+//	SetCurrentSpeed((int8)speed);
+//	pRunAnimSpeed = speed;
+//#ifdef BOTS
+//	if (IsClient() || IsBot())
+//#else
+//	if (IsClient())
+//#endif
+//	{
+//		animation = speed / 2;
+//	}
+//
+//	// --------------------------------------------------------------------------
+//	// 2: get unit vector
+//	// --------------------------------------------------------------------------
+//	float mag = sqrtf(m_TargetV.x*m_TargetV.x + m_TargetV.y*m_TargetV.y + m_TargetV.z*m_TargetV.z);
+//	tar_vector = (float)speed / mag;
+//
+//	// mob move fix
+//	int numsteps = (int)(mag * 13.5f / (float)speed + 0.5f);
+//
+//
+//	// mob move fix
+//
+//	if (numsteps < 20) {
+//		if (numsteps > 1) {
+//			tar_vector = 1.0f;
+//			m_TargetV.x = m_TargetV.x / (float) numsteps;
+//			m_TargetV.y = m_TargetV.y / (float) numsteps;
+//			m_TargetV.z = m_TargetV.z / (float) numsteps;
+//
+//			float new_x = m_Position.x + m_TargetV.x;
+//			float new_y = m_Position.y + m_TargetV.y;
+//			float new_z = m_Position.z + m_TargetV.z;
+//			if (IsNPC()) {
+//				entity_list.ProcessMove(CastToNPC(), new_x, new_y, new_z);
+//			}
+//
+//			m_Position.x = new_x;
+//			m_Position.y = new_y;
+//			m_Position.z = new_z;
+//			if (calculate_heading) {
+//				m_Position.w = CalculateHeadingToTarget(x, y);
+//			}
+//			tar_ndx = 20 - numsteps;
+//		}
+//		else {
+//			if (IsNPC()) {
+//				entity_list.ProcessMove(CastToNPC(), x, y, z);
+//			}
+//
+//			m_Position.x = x;
+//			m_Position.y = y;
+//			m_Position.z = z;
+//		}
+//	}
+//
+//	else {
+//		tar_vector /= 13.5f;
+//		float dur = Timer::GetCurrentTime() - pLastChange;
+//		if (dur < 0.0f) {
+//			dur = 0.0f;
+//		}
+//
+//		if (dur > 100.f) {
+//			dur = 100.f;
+//		}
+//
+//		tar_vector *= (dur / 100.0f);
+//
+//		float new_x = m_Position.x + m_TargetV.x * tar_vector;
+//		float new_y = m_Position.y + m_TargetV.y * tar_vector;
+//		float new_z = m_Position.z + m_TargetV.z * tar_vector;
+//
+//		if (IsNPC()) {
+//			entity_list.ProcessMove(CastToNPC(), new_x, new_y, new_z);
+//		}
+//
+//		m_Position.x = new_x;
+//		m_Position.y = new_y;
+//		m_Position.z = new_z;
+//		if (calculate_heading) {
+//			m_Position.w = CalculateHeadingToTarget(x, y);
+//		}
+//	}
+//
+//	if (check_z && fix_z_timer.Check() && !this->IsEngaged())
+//		this->FixZ();
+//
+//	SetMoving(true);
+//	moved = true;
+//
+//	m_Delta = glm::vec4(m_Position.x - nx, m_Position.y - ny, m_Position.z - nz, 0.0f);
+//
+//	if (IsClient()) {
+//		SendPositionUpdate(1);
+//		CastToClient()->ResetPositionTimer();
+//	}
+//	else {
+//		SendPositionUpdate();
+//		SetAppearance(eaStanding, false);
+//	}
+//
+//	pLastChange = Timer::GetCurrentTime();
+//	return true;
 }
 
 bool Mob::CalculateNewPosition(float x, float y, float z, float speed, bool check_z, bool calculate_heading) {

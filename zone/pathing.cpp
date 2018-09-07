@@ -86,27 +86,29 @@ glm::vec3 Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Wa
 		}
 
 		if (!IsRooted()) {
-			bool AtPrevNode = DistanceSquared(From, PathingLastPosition) < 1.0f;
-			if (AtPrevNode) {
-				PathingLoopCount++;
-				auto front = (*Route.begin()).pos;
-
-				if (PathingLoopCount > 5) {
-					Teleport(front);
-					SendPosition();
-					Route.pop_front();
-
-					WaypointChanged = true;
-					NodeReached = true;
-					PathingLoopCount = 0;
-				}
-
-				return front;
-			}
-			else {
-				PathingLastPosition = From;
-				PathingLoopCount = 0;
-			}
+			//bool AtPrevNode = DistanceSquared(From, PathingLastPosition) < 1.0f;
+			//if (AtPrevNode) {
+			//	PathingLoopCount++;
+			//	auto front = (*Route.begin()).pos;
+			//
+			//	if (PathingLoopCount > 10) {
+			//		Teleport(front);
+			//		SendPosition();
+			//		Route.pop_front();
+			//
+			//		WaypointChanged = true;
+			//		NodeReached = true;
+			//		PathingLoopCount = 0;
+			//	}
+			//
+			//	return front;
+			//}
+			//else {
+			//	PathingLastPosition = From;
+			//	PathingLoopCount = 0;
+			//}
+			PathingLastPosition = From;
+			PathingLoopCount = 0;
 		}
 		else {
 			PathingLastPosition = From;
