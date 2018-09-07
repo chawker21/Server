@@ -207,6 +207,7 @@ SET(common_headers
 	version.h
 	xml_parser.h
 	zone_numbers.h
+	dependency/container.h
 	event/background_task.h
 	event/event_loop.h
 	event/timer.h
@@ -262,6 +263,10 @@ SET(common_headers
 	util/memory_stream.h
 	util/directory.h
 	util/uuid.h
+)
+
+SOURCE_GROUP(Dependency FILES
+	dependency/container.h
 )
 
 SOURCE_GROUP(Event FILES

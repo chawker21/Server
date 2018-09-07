@@ -10,8 +10,8 @@ namespace EQEmu
 	class BaseContainerFactory
 	{
 	public:
-		virtual ~BaseContainerFactory() = { }
-	}
+		virtual ~BaseContainerFactory() { }
+	};
 	
 	template<typename T>
 	class ContainerFactory : public BaseContainerFactory

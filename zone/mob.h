@@ -56,6 +56,7 @@ namespace EQEmu
 {
 	struct ItemData;
 	class ItemInstance;
+	class IMovementManager;
 }
 
 enum class eSpecialAttacks : int {
@@ -1549,6 +1550,7 @@ protected:
 
 	AuraMgr aura_mgr;
 	AuraMgr trap_mgr;
+	EQEmu::IMovementManager *mMovementManager;
 
 private:
 	void _StopSong(); //this is not what you think it is

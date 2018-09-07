@@ -41,7 +41,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include "../common/eqemu_exception.h"
 #include "../common/spdat.h"
 #include "../common/eqemu_logsys.h"
-
+#include "../common/dependency/container.h"
 
 #include "zone_config.h"
 #include "masterentity.h"
@@ -62,6 +62,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include "embparser.h"
 #include "lua_parser.h"
 #include "questmgr.h"
+#include "movement_manager.h"
 
 #include "../common/event/event_loop.h"
 #include "../common/event/timer.h"
@@ -111,10 +112,13 @@ int32 SPDAT_RECORDS = -1;
 const ZoneConfig *Config;
 uint64_t frame_time = 0;
 
+void SetupDependencies();
 void Shutdown();
 extern void MapOpcodes();
 
 int main(int argc, char** argv) {
+	SetupDependencies();
+
 	RegisterExecutablePlatform(ExePlatformZone);
 	LogSys.LoadLogSettingsDefaults();
 
@@ -440,6 +444,7 @@ int main(int argc, char** argv) {
 	bool eqsf_open = false;
 	std::unique_ptr<EQ::Net::EQStreamManager> eqsm;
 	std::chrono::time_point<std::chrono::system_clock> frame_prev = std::chrono::system_clock::now();
+	auto movement_manager = EQEmu::Container::Get().Resolve<EQEmu::IMovementManager>().get();
 
 	auto loop_fn = [&](EQ::Timer* t) {
 		//Advance the timer to our current point in time
@@ -449,6 +454,11 @@ int main(int argc, char** argv) {
 		std::chrono::time_point<std::chrono::system_clock> frame_now = std::chrono::system_clock::now();
 		frame_time = std::chrono::duration_cast<std::chrono::milliseconds>(frame_now - frame_prev).count();
 		frame_prev = frame_now;
+
+		double delta_time = 0.0;
+		if (frame_time > 0) {
+			delta_time = static_cast<double>(frame_time) / 1000.0;
+		}
 
 		if (!eqsf_open && Config->ZonePort != 0) {
 			Log(Logs::General, Logs::Zone_Server, "Starting EQ Network server on port %d", Config->ZonePort);
@@ -487,40 +497,39 @@ int main(int argc, char** argv) {
 		}
 
 		if (is_zone_loaded) {
-			{
-				if (net.group_timer.Enabled() && net.group_timer.Check())
-					entity_list.GroupProcess();
+			if (net.group_timer.Enabled() && net.group_timer.Check())
+				entity_list.GroupProcess();
 
-				if (net.door_timer.Enabled() && net.door_timer.Check())
-					entity_list.DoorProcess();
+			if (net.door_timer.Enabled() && net.door_timer.Check())
+				entity_list.DoorProcess();
 
-				if (net.object_timer.Enabled() && net.object_timer.Check())
-					entity_list.ObjectProcess();
+			if (net.object_timer.Enabled() && net.object_timer.Check())
+				entity_list.ObjectProcess();
 
-				if (net.corpse_timer.Enabled() && net.corpse_timer.Check())
-					entity_list.CorpseProcess();
+			if (net.corpse_timer.Enabled() && net.corpse_timer.Check())
+				entity_list.CorpseProcess();
 
-				if (net.trap_timer.Enabled() && net.trap_timer.Check())
-					entity_list.TrapProcess();
+			if (net.trap_timer.Enabled() && net.trap_timer.Check())
+				entity_list.TrapProcess();
 
-				if (net.raid_timer.Enabled() && net.raid_timer.Check())
-					entity_list.RaidProcess();
+			if (net.raid_timer.Enabled() && net.raid_timer.Check())
+				entity_list.RaidProcess();
 
-				entity_list.Process();
-				entity_list.MobProcess();
-				entity_list.BeaconProcess();
-				entity_list.EncounterProcess();
+			entity_list.Process();
+			entity_list.MobProcess();
+			entity_list.BeaconProcess();
+			entity_list.EncounterProcess();
 
-				if (zone) {
-					if (!zone->Process()) {
-						Zone::Shutdown();
-					}
+			if (zone) {
+				if (!zone->Process()) {
+					Zone::Shutdown();
 				}
-
-				if (quest_timers.Check())
-					quest_manager.Process();
-
 			}
+
+			if (quest_timers.Check())
+				quest_manager.Process();
+
+			movement_manager->Tick(delta_time);
 		}
 
 		if (InterserverTimer.Check()) {
@@ -674,4 +683,9 @@ void UpdateWindowTitle(char* iNewTitle) {
 	}
 	SetConsoleTitle(tmp);
 #endif
+}
+
+void SetupDependencies() {
+	auto &container = EQEmu::Container::Get();
+	container.RegisterSingleton<EQEmu::IMovementManager, EQEmu::MovementManager>();
 }

@@ -19,10 +19,12 @@
 #include "../common/spdat.h"
 #include "../common/string_util.h"
 #include "../common/misc_functions.h"
+#include "../common/dependency/container.h"
 
 #include "quest_parser_collection.h"
 #include "string_ids.h"
 #include "worldserver.h"
+#include "movement_manager_interface.h"
 
 #include <limits.h>
 #include <math.h>
@@ -118,6 +120,12 @@ Mob::Mob(const char* in_name,
 		position_update_melee_push_timer(500),
 		hate_list_cleanup_timer(6000)
 {
+	//Dependencies
+	auto &container = EQEmu::Container::Get();
+	//Movement manager is a singleton so will never be destroyed until the application ends.
+	//So it's safe to get a raw pointer to it.
+	mMovementManager = container.Resolve<EQEmu::IMovementManager>().get();
+
 	targeted = 0;
 	tar_ndx = 0;
 	tar_vector = 0;
@@ -185,7 +193,6 @@ Mob::Mob(const char* in_name,
 	current_speed = base_runspeed;
 
 	m_PlayerState = 0;
-
 
 	// sanity check
 	if (runspeed < 0 || runspeed > 20)
@@ -450,6 +457,8 @@ Mob::Mob(const char* in_name,
 
 	PathRecalcTimer.reset(new Timer(500));
 	PathingLoopCount = 0;
+
+	mMovementManager->AddUnit(this);
 }
 
 Mob::~Mob()
@@ -488,6 +497,8 @@ Mob::~Mob()
 #ifdef BOTS
 	LeaveHealRotationTargetPool();
 #endif
+
+	mMovementManager->RemoveUnit(this);
 }
 
 uint32 Mob::GetAppearanceValue(EmuAppearance iAppearance) {
